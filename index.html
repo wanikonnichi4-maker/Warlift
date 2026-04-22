@@ -383,6 +383,11 @@ option{background:var(--s2)}
         <div class="field"><label class="lbl">デフォルト重量</label><input class="inp" id="mDefW" type="number" inputmode="decimal" placeholder="kg"></div>
         <div class="field"><label class="lbl">デフォルト Reps</label><input class="inp" id="mDefR" type="number" inputmode="numeric" placeholder="5"></div>
       </div>
+      <div class="field"><label class="lbl">デフォルトギア</label>
+        <select class="inp" id="mDefGear">
+          <option value="">RAW（ギアなし）</option>
+        </select>
+      </div>
       <button class="btn btn-acc btn-full" onclick="saveExModal()">▶ SAVE</button>
       <button class="btn btn-danger btn-full" id="mDelBtn" onclick="deleteEx()" style="display:none">✕ 削除</button>
     </div>
@@ -1392,7 +1397,7 @@ function renderRows(id){
 }
 function addSet(id){
   const ex=getEx(id);const last=ex.sets[ex.sets.length-1];
-  ex.sets.push({weight:last?last.weight:(ex.defW||''),reps:last?last.reps:(ex.defR||''),rpe:last?last.rpe:'8',rir:last?last.rir:'2',done:false,e1rm:null});
+  ex.sets.push({weight:last?last.weight:(ex.defW||''),reps:last?last.reps:(ex.defR||''),rpe:last?last.rpe:'8',rir:last?last.rir:'2',done:false,e1rm:null,gearId:last?last.gearId:(ex.defGearId||'')});
   renderRows(id);save();
 }
 function updSet(id,i,f,v){
@@ -1767,12 +1772,19 @@ function openExModal(id){
   document.getElementById('mName').value=ex?.name||'';document.getElementById('mMuscle').value=ex?.muscle||'CHEST';
   document.getElementById('mRest').value=ex?.restSec||180;document.getElementById('mOneRM').value=ex?.oneRM||'';
   document.getElementById('mDefW').value=ex?.defW||'';document.getElementById('mDefR').value=ex?.defR||'5';
+  // Populate gear selector
+  const gearSel=document.getElementById('mDefGear');
+  gearSel.innerHTML='<option value="">RAW（ギアなし）</option>'+(S.gear||[]).map(g=>{
+    const off=g.offset?`  −${Math.abs(g.offset)}%`:'';
+    return `<option value="${g.id}">${g.cat||''} ${g.name}${off}</option>`;
+  }).join('');
+  gearSel.value=ex?.defGearId||'';
   document.getElementById('mDelBtn').style.display=ex?'block':'none';document.getElementById('smolPrev').innerHTML='';
   document.getElementById('exModal').classList.add('on');if(ex?.oneRM)prevSmol();
 }
 function saveExModal(){
   const name=document.getElementById('mName').value.trim().toUpperCase();if(!name){toast('種目名を入力してください');return;}
-  const data={name,muscle:document.getElementById('mMuscle').value,restSec:parseInt(document.getElementById('mRest').value),oneRM:parseFloat(document.getElementById('mOneRM').value)||null,defW:document.getElementById('mDefW').value,defR:document.getElementById('mDefR').value||'5'};
+  const data={name,muscle:document.getElementById('mMuscle').value,restSec:parseInt(document.getElementById('mRest').value),oneRM:parseFloat(document.getElementById('mOneRM').value)||null,defW:document.getElementById('mDefW').value,defR:document.getElementById('mDefR').value||'5',defGearId:document.getElementById('mDefGear').value||''};
   if(_eId)Object.assign(getEx(_eId),data);else S.exercises.push({id:'ex'+Date.now(),sets:[],...data});
   closeM('exModal');save();renderAll();toast(_eId?'更新':'追加');
 }
